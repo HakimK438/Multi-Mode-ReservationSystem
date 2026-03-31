@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservation Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --night: #06080f;
+  --card: #0e1120;
+  --glass: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --text: #f0f4ff;
+  --muted: #7888aa;
+  --green: #00e676;
+  --red: #ff1744;
+  --gold: #ffd600;
+  --accent1: #00c6ff;
+  --accent2: #0072ff;
+  --glow: rgba(0,114,255,0.35);
+  --tab-glow: rgba(0,198,255,0.2);
+  --orb-a: #0072ff;
+  --orb-b: #00c6ff;
+  --orb-c: #0040cc;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--night);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── ANIMATED BACKGROUND ── */
+.bg-orbs { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.orb {
+  position:absolute; border-radius:50%;
+  filter:blur(90px); opacity:0.18;
+  animation:drift 14s ease-in-out infinite;
+}
+.orb1 { width:520px;height:520px;background:var(--orb-a);top:-120px;left:-120px;animation-delay:0s; }
+.orb2 { width:420px;height:420px;background:var(--orb-b);bottom:-100px;right:-100px;animation-delay:-5s; }
+.orb3 { width:320px;height:320px;background:var(--orb-c);top:45%;left:45%;animation-delay:-9s; }
+@keyframes drift {
+  0%,100%{ transform:translate(0,0) scale(1); }
+  50%{ transform:translate(40px,30px) scale(1.1); }
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:0.0003;
+}
+
+.app { position:relative; z-index:1; max-width:980px; margin:0 auto; padding:0 20px 80px; }
+
+/* ── HEADER ── */
+header { display:flex; align-items:center; justify-content:space-between; padding:28px 0 16px; }
+.logo { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.5px; display:flex; align-items:center; gap:10px; }
+
+.logo-icon {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; box-shadow:0 4px 16px var(--glow);
+}
+.logo span {
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.header-actions { display:flex; gap:10px; align-items:center; }
+.header-btn {
+  background:var(--glass); border:1px solid var(--border);
+  padding:9px 18px; border-radius:10px; color:var(--text);
+  font-family:'Syne',sans-serif; font-weight:600; font-size:13px;
+  cursor:pointer; transition:all .2s; backdrop-filter:blur(12px);
+}
+.header-btn:hover { border-color:var(--accent1); color:var(--accent1); }
+.header-btn.active { border-color:var(--accent1); background:rgba(0,198,255,0.1); color:var(--accent1); }
+
+/* ── STATUS PILL ── */
+.status-pill {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--glass); border:1px solid var(--border);
+  padding:5px 12px; border-radius:20px; font-size:11px; color:var(--muted);
+}
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); }
+.status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); animation:pulse-dot 2s infinite; }
+.status-dot.offline { background:var(--red); }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ══════════════════════════════════
+   HERO SECTION
+══════════════════════════════════ */
+.hero {
+  padding: 36px 0 48px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,198,255,0.08); border: 1px solid rgba(0,198,255,0.2);
+  padding: 5px 14px; border-radius: 30px;
+  font-size: 11px; font-weight: 600; color: var(--accent1);
+  text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.6s ease both;
+}
+.hero-eyebrow-dot { width:6px;height:6px;border-radius:50%;background:var(--accent1);animation:pulse-dot 2s infinite; }
+.hero-headline {
+  font-family:'Syne',sans-serif;
+  font-size: clamp(36px, 6vw, 62px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -2.5px;
+  margin-bottom: 18px;
+  animation: fadeInUp 0.6s ease 0.1s both;
+}
+.hero-headline .grad {
+  background:linear-gradient(135deg,var(--accent1) 0%,var(--accent2) 60%,#a855f7 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow: 0 0 30px rgba(0, 114, 255, 0.25);
+}
+
+.hero-sub {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.65;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.6s ease 0.18s both;
+}
+
+.hero-sub strong { color: var(--text); font-weight: 500; }
+
+/* Tagline pills row */
+.taglines {
+  display: none !important;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 36px;
+  animation: fadeInUp 0.6s ease 0.25s both;
+}
+.tagline-pill {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--glass); border: 1px solid var(--border);
+  padding: 8px 16px; border-radius: 30px;
+  font-size: 13px; color: var(--text); font-weight: 500;
+  transition: all .2s; cursor: default;
+}
+.tagline-pill:hover { border-color: var(--accent1); background: rgba(0,198,255,0.07); }
+.tagline-pill .pill-icon { font-size: 15px; }
+
+/* Stats row */
+.hero-stats {
+  display: flex; gap: 40px; flex-wrap: wrap;
+  animation: fadeInUp 0.6s ease 0.32s both;  margin-top: 40px;
+}
+.hero-stat { display: flex; flex-direction: column; gap: 2px; transition: transform 0.2s ease; }
+.hero-stat:hover {
+  transform: translateY(-3px);
+}
+.hero-stat-num {
+  font-family:'Syne',sans-serif; font-size: 30px; font-weight: 800;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+  text-shadow: 0 0 20px rgba(0, 198, 255, 0.25);
+}
+.hero-stat-label { font-size: 10px; color: var(--muted);letter-spacing: 1.2px;
+ text-transform: uppercase;}
+.hero-divider {
+  width: 1px;
+  height: 40px;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0,198,255,0.4),
+    transparent
+  );
+
+  box-shadow: 0 0 10px rgba(0,198,255,0.3);
+}
+
+/* Decorative floating badge */
+.hero-badge {
+  position: absolute; right: 0; top: 30px;
+  background: var(--glass); border: 1px solid var(--border);
+  backdrop-filter: blur(20px); border-radius: 16px;
+  padding: 16px 20px; text-align: center;
+  animation: float 6s ease-in-out infinite, fadeInUp 0.6s ease 0.4s both;
+    display: none !important;
+
+}
+@media(min-width:700px){ .hero-badge { display: block; } }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.hero-badge-icon { font-size: 30px; display:block; margin-bottom: 6px; }
+.hero-badge-text { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; }
+.hero-badge-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── DEMO NOTICE ── */
+.demo-notice {
+  background:rgba(255,214,0,0.08); border:1px solid rgba(255,214,0,0.25);
+  border-radius:12px; padding:12px 16px; margin-bottom:20px;
+  font-size:12px; color:var(--gold); display:none;
+}
+.demo-notice.show { display:block; }
+
+/* ── TRANSPORT TABS ── */
+.section-label {
+  font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:2px;
+  font-weight:600; margin-top: 60px; margin-bottom:20px;
+}
+.transport-tabs { display:flex; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
+.transport-tabs::before {
+  content:'';
+  position:absolute;
+  width:600px;
+  height:300px;
+
+  background: radial-gradient(circle, rgba(0,198,255,0.12), transparent 70%);
+  top:-100px;
+  left:50%;
+  transform:translateX(-50%);
+  filter:blur(80px);
+  z-index:0;
+}
+.tab {
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:14px 26px;
+  border-radius:16px;
+
+  cursor:pointer;
+  font-family:'Syne',sans-serif;
+  font-weight:600;
+  font-size:14px;
+
+  position:relative;
+  overflow:hidden;
+  flex-shrink:0;
+
+  /* GLASS */
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(16px);
+
+  /* SOFTER BORDER */
+  border: 1px solid rgba(255,255,255,0.08);
+
+  /* DEPTH */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+
+  transition: all 0.35s ease;
+}
+
+.tab::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .25s; }
+.tab-train::before  { background:linear-gradient(135deg,#00c6ff18,#0072ff30); }
+.tab-flight::before { background:linear-gradient(135deg,#7c3aed18,#a855f730); }
+.tab-ship::before   { background:linear-gradient(135deg,#ff6b2b18,#ff3a0030); }
+.tab:hover {
+  transform: translateY(-4px) scale(1.02);
+
+  box-shadow:
+    0 14px 40px rgba(0,0,0,0.5),
+    0 0 30px rgba(0,198,255,0.15);
+}
+.tab:hover::before { opacity:1; }
+.tab.active { border-color:var(--accent1); box-shadow:0 6px 24px var(--tab-glow); }
+.tab.active::before { opacity:1; }
+.tab-icon {
+  font-size:20px;
+  filter: drop-shadow(0 0 6px rgba(0,198,255,0.4));
+}
+.tab-desc {
+  font-size:11px;
+  color:rgba(200,210,255,0.65);
+}
+/* ── SEARCH CARD ── */
+.search-card {
+  background:var(--glass); border:1px solid var(--border);
+  border-radius:22px; padding:30px 30px 28px; backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,0.45);
+  animation:slideUp .45s ease both;
+  border-top:2px solid var(--accent1);
+  position:relative; overflow:hidden;
+}
+.search-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent1),transparent);
+}
+@keyframes slideUp {
+  from{ opacity:0; transform:translateY(18px); }
+  to  { opacity:1; transform:translateY(0); }
+}
+.route-row { display:flex; gap:12px; align-items:flex-end; margin-bottom:18px; }
+.input-group { flex:1; position:relative; }
+.input-group label {
+  display:block; font-size:11px; font-weight:500; color:var(--muted);
+  text-transform:uppercase; letter-spacing:1px; margin-bottom:7px;
+}
+.input-group input, .input-group select {
+  width:100%; background:rgba(255,255,255,0.05);
+  border:1px solid var(--border); border-radius:11px;
+  padding:13px 15px; color:var(--text); font-size:15px;
+  font-family:'DM Sans',sans-serif; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.input-group input::placeholder { color:var(--muted); }
+.input-group input:focus, .input-group select:focus {
+  border-color:var(--accent1);
+  box-shadow:0 0 0 3px rgba(0,198,255,0.15);
+}
+.input-group select option { background:var(--card); }
+.iata-input { text-transform:uppercase; letter-spacing:2px; font-weight:700; font-size:18px !important; }
+.swap-btn {
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  border:none; width:42px; height:42px; border-radius:50%;
+  color:#fff; font-size:17px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:transform .35s;
+  box-shadow:0 4px 16px var(--glow);
+}
+.swap-btn:hover { transform:rotate(180deg); }
+.options-row { display:grid; gap:14px; margin-bottom:22px; }
+.cols-2 { grid-template-columns:1fr 1fr; }
+.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+.search-btn {
+  width:100%; padding:15px; border:none; border-radius:13px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  color:#fff; font-family:'Syne',sans-serif; font-weight:700;
+  font-size:16px; cursor:pointer;
+  transition:all .25s; box-shadow:0 8px 28px var(--glow);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.search-btn:hover { transform:translateY(-2px); box-shadow:0 12px 36px var(--glow); }
+.search-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+/* ── FEATURE STRIP (under search) ── */
+.feature-strip {
+  display: flex; gap: 0; margin-top: 18px;
+  border-top: 1px solid var(--border); padding-top: 18px;
+  flex-wrap: wrap; gap: 16px;
+}
+.feature-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--muted);
+}
+.feature-item .fi-icon { font-size: 15px; }
+
+/* ── RESULTS ── */
+.section-title {
+  font-family:'Syne',sans-serif; font-size:18px; font-weight:700;
+  margin:36px 0 14px; display:flex; align-items:center; gap:10px;
+}
+.badge {
+  background:var(--glass); border:1px solid var(--border);
+  font-size:12px; padding:3px 10px; border-radius:20px; color:var(--muted);
+}
+.results-grid { display:flex; flex-direction:column; gap:12px; }
+.result-card {
+  background:var(--glass); border:1px solid var(--border);
+  border-radius:18px; padding:20px 24px; backdrop-filter:blur(12px);
+  display:grid; grid-template-columns:180px 1fr auto auto;
+  align-items:center; gap:20px; cursor:pointer;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.result-card::after {
+  content:'';
+  position:absolute;
+  left:0;
+  top:8px;
+  bottom:8px;
+
+  width:3px;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--accent1),
+    var(--accent2),
+    transparent
+  );
+
+  border-radius:6px;
+  box-shadow: 0 0 10px rgba(0,198,255,0.4);
+}
+.time,
+.price {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "lnum";
+  letter-spacing: 0.5px;
+}
+.result-card:hover { border-color:var(--accent1); transform:translateX(4px); box-shadow:0 8px 28px rgba(0,0,0,0.3); }
+.res-name { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; }
+.res-num  { font-size:12px; color:var(--muted); margin-top:2px; }
+.route-times { display:flex; align-items:center; gap:14px; }
+.time-block { text-align:center; min-width:70px; }
+.time { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; }
+.station-code { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--accent1); margin-top:2px; }
+.duration-line { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.line {
+  height: 2px;
+  width: 100%;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent1),
+    var(--accent2),
+    transparent
+  );
+
+  position: relative;
+}
+.dur-text { font-size:11px; color:var(--muted); }
+.price-block { text-align:right; }
+.price {
+  font-size: 24px;
+  font-weight: 900;
+
+  background: linear-gradient(135deg, #00e676, #00c853);
+
+  /* STANDARD */
+  background-clip: text;
+
+  /* WEBKIT (required for Chrome/Safari) */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  color: transparent; /* fallback */
+
+  text-shadow: 0 0 20px rgba(0,230,118,0.25);
+}.price-note { font-size:11px; color:var(--muted); margin-top:2px; }
+.book-mini-btn {
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  border:none; padding:10px 20px; border-radius:10px;
+  color:#fff; font-family:'Syne',sans-serif; font-weight:600;
+  font-size:13px; cursor:pointer; transition:all .2s; white-space:nowrap;
+  box-shadow:0 4px 14px var(--glow);
+}
+.book-mini-btn:hover { opacity:.9; transform:scale(1.03); }
+
+/* ── HOW IT WORKS ── */
+.how-section { margin: 48px 0 0; }
+.how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 10px;margin-bottom: 100px; }
+.how-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 26px 24px;
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(16px);
+
+  /* REMOVE old border */
+  border: 1px solid transparent;
+
+  /* NEW gradient border */
+  background-image:
+    linear-gradient(var(--card), var(--card)),
+    linear-gradient(135deg, rgba(0,198,255,0.4), rgba(168,85,247,0.4));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  transition: all 0.35s ease;
+}
+.how-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 0%, rgba(0,198,255,0.12), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.how-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.5),
+    0 0 40px rgba(0,198,255,0.15);
+}
+.how-card:hover::before {
+  opacity: 1;
+}
+.how-num {
+  font-family:'Syne',sans-serif; font-size: 40px; font-weight: 800;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+  opacity: 0.4; line-height:1; margin-bottom:8px;
+}
+.how-card::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,198,255,0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.how-card:hover::after {
+  opacity: 1;
+}
+.how-title { font-family:'Syne',sans-serif; font-weight:700; font-size:14px; margin-bottom:5px; }
+.how-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+
+
+/* ── BOOKINGS VIEW ── */
+.bookings-section { display:none; }
+.booking-card {
+  background:var(--glass); border:1px solid var(--border);
+  border-radius:16px; padding:18px 22px; margin-bottom:12px;
+  position:relative; overflow:hidden;
+}
+.booking-card::after {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:4px; border-radius:4px 0 0 4px;
+}
+.booking-card.confirmed::after { background:var(--green); }
+.booking-card.cancelled::after { background:var(--red); }
+.booking-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.booking-ref { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--accent1); }
+.booking-status {
+  font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;
+  text-transform:uppercase; letter-spacing:1px;
+}
+.booking-status.confirmed { background:rgba(0,230,118,0.15); color:var(--green); }
+.booking-status.cancelled { background:rgba(255,23,68,0.15); color:var(--red); }
+.booking-details { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; font-size:13px; }
+.booking-detail-item { display:flex; flex-direction:column; gap:2px; }
+.bd-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px; }
+.bd-value { font-weight:600; }
+.cancel-btn {
+  background:rgba(255,23,68,0.1); border:1px solid rgba(255,23,68,0.3);
+  color:var(--red); padding:7px 14px; border-radius:8px;
+  font-size:12px; font-weight:600; cursor:pointer; transition:all .2s;
+  font-family:'Syne',sans-serif;
+}
+.cancel-btn:hover { background:rgba(255,23,68,0.2); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.75);
+  z-index:100; display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(8px); opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:26px; padding:32px; width:90%; max-width:700px;
+  max-height:90vh; overflow-y:auto;
+  transform:scale(.95); transition:transform .3s;
+  border-top:2px solid var(--accent1);
+}
+.modal-overlay.open .modal { transform:scale(1); }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; }
+.modal-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; }
+.close-btn {
+  background:rgba(255,255,255,.08); border:none; color:var(--text);
+  width:34px; height:34px; border-radius:50%; font-size:17px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.close-btn:hover { background:rgba(255,255,255,.15); }
+
+/* ── STEP INDICATOR ── */
+.steps { display:flex; gap:0; margin-bottom:28px; }
+.step { flex:1; display:flex; flex-direction:column; align-items:center; position:relative; }
+.step:not(:last-child)::after {
+  content:''; position:absolute; top:14px; left:50%; width:100%; height:2px;
+  background:var(--border); z-index:0;
+}
+.step.done:not(:last-child)::after { background:var(--accent1); }
+.step-circle {
+  width:28px; height:28px; border-radius:50%; border:2px solid var(--border);
+  background:var(--card); display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; z-index:1; position:relative; transition:all .3s;
+}
+.step.active .step-circle { border-color:var(--accent1); color:var(--accent1); box-shadow:0 0 0 4px rgba(0,198,255,.15); }
+.step.done .step-circle { border-color:var(--accent1); background:var(--accent1); color:#000; }
+.step-label { font-size:11px; color:var(--muted); margin-top:6px; text-align:center; }
+.step.active .step-label { color:var(--accent1); font-weight:600; }
+
+/* ── SEAT MAP ── */
+.seat-map-wrapper { overflow-x:auto; }
+.seat-legend { display:flex; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+.legend-dot { width:13px; height:13px; border-radius:4px; flex-shrink:0; }
+.seat-cabin {
+  background:rgba(255,255,255,0.03); border:1px solid var(--border);
+  border-radius:14px; padding:18px 16px; margin-bottom:14px;
+}
+.cabin-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.seat-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.row-num { font-size:11px; color:var(--muted); width:22px; text-align:center; flex-shrink:0; }
+.seat-group { display:flex; gap:6px; }
+.aisle-gap { width:20px; flex-shrink:0; }
+.seat {
+  width:40px; height:40px; border-radius:8px; border:none;
+  font-weight:700; font-size:12px; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.seat.available { background:rgba(0,230,118,.14); color:var(--green); border:1px solid rgba(0,230,118,.3); }
+.seat.available:hover { background:rgba(0,230,118,.3); transform:scale(1.1); }
+.seat.taken { background:rgba(255,23,68,.13); color:var(--red); border:1px solid rgba(255,23,68,.2); cursor:not-allowed; }
+.seat.selected {
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  color:#fff; border:none; transform:scale(1.1);
+  box-shadow:0 4px 14px var(--glow);
+}
+.selected-info { margin-top:10px; padding:12px 14px; background:rgba(0,198,255,.07); border-radius:11px; font-size:13px; min-height:42px; }
+
+/* ── FORM ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-field label { display:block; font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.8px; }
+.form-field input, .form-field select {
+  width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border);
+  border-radius:10px; padding:12px 13px; color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:14px; outline:none; transition:border-color .2s;
+}
+.form-field input:focus, .form-field select:focus { border-color:var(--accent1); }
+.form-field select option { background:var(--card); }
+.seat-display {
+  background:rgba(0,198,255,.1); border:1px solid rgba(0,198,255,.3);
+  border-radius:10px; padding:12px 13px;
+  font-family:'Syne',sans-serif; font-weight:700; color:var(--accent1); font-size:15px;
+}
+.action-btn {
+  width:100%; margin-top:20px; padding:15px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  border:none; border-radius:13px; color:#fff;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:16px;
+  cursor:pointer; transition:all .2s; box-shadow:0 8px 22px var(--glow);
+}
+.action-btn:hover { transform:translateY(-2px); opacity:.92; }
+.action-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.action-btn.green { background:linear-gradient(135deg,var(--green),#00b248); box-shadow:0 8px 22px rgba(0,230,118,.28); }
+
+/* ── PAYMENT ── */
+.payment-summary { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:18px; }
+.pay-row { display:flex; justify-content:space-between; padding:7px 0; font-size:14px; }
+.pay-row.total { border-top:1px solid var(--border); margin-top:8px; padding-top:14px; font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:var(--green); }
+.pay-methods { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; }
+.pay-method {
+  background:rgba(255,255,255,.04); border:2px solid var(--border);
+  border-radius:11px; padding:11px 6px; text-align:center; cursor:pointer;
+  transition:all .2s; font-size:12px; font-weight:500;
+}
+.pay-method.selected { border-color:var(--accent1); background:rgba(0,198,255,.08); color:var(--accent1); }
+.pay-icon { font-size:18px; display:block; margin-bottom:4px; }
+.card-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+.card-form .full { grid-column:1/-1; }
+
+/* ── SUCCESS ── */
+.success-screen { text-align:center; padding:36px 16px; display:none; }
+.success-screen.show { display:block; animation:slideUp .4s ease; }
+.success-icon { font-size:68px; margin-bottom:14px; }
+.success-screen h2 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; margin-bottom:8px; }
+.pnr-box { background:rgba(0,230,118,.09); border:1px solid rgba(0,230,118,.3); border-radius:12px; padding:16px; margin:18px 0; }
+.pnr-label { font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px; }
+.pnr-num { font-size:28px; font-weight:800; color:var(--green); letter-spacing:4px; font-family:'Syne',sans-serif; }
+.confirm-details { background:rgba(255,255,255,.04); border-radius:12px; padding:14px; text-align:left; font-size:13px; margin-bottom:18px; }
+.cd-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
+.cd-row:last-child { border-bottom:none; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(60px);
+  background:#ff1744; color:#fff; padding:12px 24px; border-radius:12px;
+  font-size:14px; font-weight:600; z-index:999; transition:transform .3s;
+  box-shadow:0 8px 24px rgba(255,23,68,.4); white-space:nowrap;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+.toast.success { background:#00b248; box-shadow:0 8px 24px rgba(0,178,72,.4); }
+
+/* ── SPINNER ── */
+.spinner {
+  display:inline-block; width:18px; height:18px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff; border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── TRUST STRIP ── */
+.trust-strip {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+
+  padding: 28px 32px;
+  border-radius: 22px;
+
+  /* GLASS BASE */
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(20px);
+
+  /* REMOVE FLAT BORDER */
+  border: 1px solid transparent;
+
+  /* PREMIUM BORDER GRADIENT */
+  background-image:
+    linear-gradient(var(--card), var(--card)),
+    linear-gradient(135deg, rgba(0,198,255,0.35), rgba(168,85,247,0.35));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+
+  overflow: hidden;
+}
+.trust-strip::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0,198,255,0.15), transparent 70%);
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: blur(80px);
+  z-index: 0;
+}
+.trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.trust-item strong { color: var(--text); font-weight:600; }
+.trust-divider {
+  width: 1px;
+  height: 22px;
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0,198,255,0.4),
+    transparent
+  );
+
+  box-shadow: 0 0 10px rgba(0,198,255,0.25);
+}
+@media(max-width:650px){
+  .result-card { grid-template-columns:1fr 1fr; }
+  .options-row.cols-3 { grid-template-columns:1fr 1fr; }
+  .form-grid { grid-template-columns:1fr; }
+  .transport-tabs { gap:8px; }
+  .tab { padding:10px 14px; font-size:13px; }
+  .pay-methods { grid-template-columns:1fr 1fr; }
+  .booking-details { grid-template-columns:1fr 1fr; }
+  .how-grid { grid-template-columns:1fr; }
+  .hero-stats { gap:20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🗺️</div>
+      Reservation <span>Project</span>
+    </div>
+    <div class="header-actions">
+      <div class="status-pill" id="statusPill">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Checking…</span>
+      </div>
+      <button class="header-btn" id="searchTabBtn" onclick="showView('search')" style="display:none">🔍 Search</button>
+      <button class="header-btn" id="myBookingsBtn" onclick="showView('bookings')">📋 My Bookings</button>
+    </div>
+  </header>
+
+  <!-- DEMO NOTICE -->
+  <div class="demo-notice" id="demoNotice">
+    ⚠️ Backend is offline — showing demo data. Bookings will not be saved to the database.
+    Make sure FastAPI is running at <strong id="apiUrlDisplay"></strong>
+  </div>
+
+  <!-- ══════════ SEARCH VIEW ══════════ -->
+  <div id="searchView">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-badge">
+        <span class="hero-badge-icon">🚀</span>
+        <div class="hero-badge-text">Smart Booking</div>
+        <div class="hero-badge-sub">Train · Flight · Ship</div>
+      </div>
+
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        Unified Reservation Platform
+      </div>
+
+      <h1 class="hero-headline">
+        Book Smarter.<br>
+        Travel <span class="grad">Seamlessly.</span>
+      </h1>
+
+      <p class="hero-sub">
+        One platform for <strong>trains, flights & ships</strong> — real-time seat maps, instant confirmation, and zero hassle. Reserve your journey the modern way.
+      </p>
+
+      <div class="taglines">
+        <div class="tagline-pill"><span class="pill-icon">⚡</span> Instant Confirmation</div>
+        <div class="tagline-pill"><span class="pill-icon">🗺️</span> Live Seat Maps</div>
+        <div class="tagline-pill"><span class="pill-icon">🔒</span> Secure Payments</div>
+        <div class="tagline-pill"><span class="pill-icon">🎫</span> Digital Tickets</div>
+        <div class="tagline-pill"><span class="pill-icon">🔄</span> Easy Cancellations</div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">3</div>
+          <div class="hero-stat-label">Transport Modes</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">15+</div>
+          <div class="hero-stat-label">Cities Connected</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">4</div>
+          <div class="hero-stat-label">Payment Methods</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">100%</div>
+          <div class="hero-stat-label">Secure Checkout</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSPORT TABS -->
+    <div class="section-label">Select a travel mode</div>
+    <div class="transport-tabs">
+      <div class="tab tab-train active" onclick="switchMode('train',this)">
+        <span class="tab-icon">🚄</span>
+        <div>
+          <div>Trains</div>
+          <div class="tab-desc">Railway reservations</div>
+        </div>
+      </div>
+      <div class="tab tab-flight" onclick="switchMode('flight',this)">
+        <span class="tab-icon">✈️</span>
+        <div>
+          <div>Flights</div>
+          <div class="tab-desc">Domestic & international</div>
+        </div>
+      </div>
+      <div class="tab tab-ship" onclick="switchMode('ship',this)">
+        <span class="tab-icon">🚢</span>
+        <div>
+          <div>Ships</div>
+          <div class="tab-desc">Sea travel services</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH CARD -->
+    <div class="search-card" id="searchCard">
+
+      <!-- TRAIN FORM -->
+      <div id="form-train">
+        <div class="route-row">
+          <div class="input-group">
+            <label>From (Station / City)</label>
+            <input type="text" id="train-from" placeholder="e.g. Mumbai" list="trainCities">
+            <datalist id="trainCities">
+              <option value="Mumbai"><option value="Delhi"><option value="Bangalore">
+              <option value="Chennai"><option value="Kolkata"><option value="Hyderabad">
+              <option value="Pune"><option value="Ahmedabad"><option value="Jaipur">
+              <option value="Goa"><option value="Chandigarh"><option value="Lucknow">
+              <option value="Amritsar"><option value="Patna"><option value="Bhubaneswar">
+            </datalist>
+          </div>
+          <button class="swap-btn" onclick="swapFields('train-from','train-to')" title="Swap">⇄</button>
+          <div class="input-group">
+            <label>To (Station / City)</label>
+            <input type="text" id="train-to" placeholder="e.g. Delhi" list="trainCities">
+          </div>
+        </div>
+        <div class="options-row cols-3">
+          <div class="input-group">
+            <label>Departure Date</label>
+            <input type="date" id="train-date">
+          </div>
+          <div class="input-group">
+            <label>Passengers</label>
+            <select id="train-pax">
+              <option>1 Passenger</option><option>2 Passengers</option><option>3 Passengers</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Class</label>
+            <select id="train-class">
+              <option value="SL">Sleeper (SL)</option>
+              <option value="3A">AC 3 Tier (3A)</option>
+              <option value="2A">AC 2 Tier (2A)</option>
+              <option value="1A">AC First Class (1A)</option>
+            </select>
+          </div>
+        </div>
+        <button class="search-btn" id="trainSearchBtn" onclick="doSearch()">🔍 Search Trains</button>
+        <div class="feature-strip">
+          <div class="feature-item"><span class="fi-icon">🗺️</span> Live seat maps</div>
+          <div class="feature-item"><span class="fi-icon">⚡</span> Instant results</div>
+          <div class="feature-item"><span class="fi-icon">🎫</span> Instant PNR</div>
+          <div class="feature-item"><span class="fi-icon">🔄</span> Free cancellation</div>
+        </div>
+      </div>
+
+      <!-- FLIGHT FORM -->
+      <div id="form-flight" style="display:none;">
+        <div class="route-row">
+          <div class="input-group">
+            <label>From (Airport Code)</label>
+            <input type="text" id="flight-from" class="iata-input" placeholder="BOM" maxlength="3" list="airports">
+            <datalist id="airports">
+              <option value="BOM"><option value="DEL"><option value="BLR"><option value="MAA">
+              <option value="CCU"><option value="HYD"><option value="GOI"><option value="AMD">
+            </datalist>
+          </div>
+          <button class="swap-btn" onclick="swapFields('flight-from','flight-to')">⇄</button>
+          <div class="input-group">
+            <label>To (Airport Code)</label>
+            <input type="text" id="flight-to" class="iata-input" placeholder="DEL" maxlength="3" list="airports">
+          </div>
+        </div>
+        <div class="options-row cols-3">
+          <div class="input-group"><label>Date</label><input type="date" id="flight-date"></div>
+          <div class="input-group"><label>Passengers</label>
+            <select id="flight-pax"><option>1 Passenger</option><option>2 Passengers</option></select>
+          </div>
+          <div class="input-group"><label>Class</label>
+            <select id="flight-class"><option value="economy">Economy</option><option value="business">Business</option></select>
+          </div>
+        </div>
+        <button class="search-btn" onclick="doSearch()">🔍 Search Flights</button>
+        <div class="feature-strip">
+          <div class="feature-item"><span class="fi-icon">✈️</span> Domestic & international</div>
+          <div class="feature-item"><span class="fi-icon">💺</span> Economy & business</div>
+          <div class="feature-item"><span class="fi-icon">🔒</span> Secure booking</div>
+        </div>
+      </div>
+
+      <!-- SHIP FORM -->
+      <div id="form-ship" style="display:none;">
+        <div class="route-row">
+          <div class="input-group">
+            <label>From Port</label>
+            <input type="text" id="ship-from" placeholder="e.g. Kochi" list="ports">
+            <datalist id="ports">
+              <option value="Kochi"><option value="Mumbai"><option value="Chennai">
+              <option value="Port Blair"><option value="Goa"><option value="Kolkata">
+              <option value="Lakshadweep">
+            </datalist>
+          </div>
+          <button class="swap-btn" onclick="swapFields('ship-from','ship-to')">⇄</button>
+          <div class="input-group">
+            <label>To Port</label>
+            <input type="text" id="ship-to" placeholder="e.g. Port Blair" list="ports">
+          </div>
+        </div>
+        <div class="options-row cols-3">
+          <div class="input-group"><label>Date</label><input type="date" id="ship-date"></div>
+          <div class="input-group"><label>Passengers</label>
+            <select id="ship-pax"><option>1 Passenger</option><option>2 Passengers</option></select>
+          </div>
+          <div class="input-group"><label>Cabin</label>
+            <select id="ship-cabin"><option>Deck</option><option>Cabin</option><option>Luxury</option></select>
+          </div>
+        </div>
+        <button class="search-btn" onclick="doSearch()">🔍 Search Ships</button>
+        <div class="feature-strip">
+          <div class="feature-item"><span class="fi-icon">🌊</span> Sea travel access</div>
+          <div class="feature-item"><span class="fi-icon">🏝️</span> Island routes</div>
+          <div class="feature-item"><span class="fi-icon">🛳️</span> Multiple cabin classes</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- RESULTS -->
+    <div id="resultsSection" style="display:none;">
+      <div class="section-title">
+        Available <span id="modeLabel">Trains</span>
+        <span class="badge" id="resultCount">0 found</span>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+    </div>
+    
+    <!-- HOW IT WORKS -->
+    <div class="how-section">
+      <div class="section-label">How it works</div>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-num">01</div>
+          <div class="how-title">Search Your Route</div>
+          <div class="how-desc">Enter your source, destination and date. We'll fetch all available trains, flights or ships in real time.</div>
+        </div>
+        <div class="how-card">
+          <div class="how-num">02</div>
+          <div class="how-title">Pick a Seat</div>
+          <div class="how-desc">View the interactive seat map. Green seats are available. Tap to select — your choice is held live.</div>
+        </div>
+        <div class="how-card">
+          <div class="how-num">03</div>
+          <div class="how-title">Pay & Go</div>
+          <div class="how-desc">Complete payment with Card, UPI, Net Banking or Wallet. Get your PNR instantly and travel with ease.</div>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <!-- TRUST STRIP -->
+    <div class="trust-strip">
+      <div class="trust-item">🔒 <strong>256-bit SSL</strong> encryption</div>
+      <div class="trust-divider"></div>
+      <div class="trust-item">💳 <strong>4 payment</strong> methods supported</div>
+      <div class="trust-divider"></div>
+      <div class="trust-item">📱 <strong>UPI, Cards</strong>, Net Banking & Wallets</div>
+      <div class="trust-divider"></div>
+      <div class="trust-item">🎫 <strong>Instant PNR</strong> on confirmation</div>
+      <div class="trust-divider"></div>
+      <div class="trust-item">🔄 <strong>Easy cancel</strong> from My Bookings</div>
+    </div>
+  </div>
+
+  <!-- ══════════ BOOKINGS VIEW ══════════ -->
+  <div id="bookingsView" style="display:none;">
+    <div class="hero" style="padding-bottom:28px;">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        Booking History
+      </div>
+      <h1 class="hero-headline" style="font-size:clamp(28px,5vw,46px);">My <span class="grad">Reservations</span></h1>
+      <p class="hero-sub" style="font-size:15px;">View all your confirmed and pending reservations in one place. Enter your email to retrieve your bookings.</p>
+    </div>
+
+    <div class="section-title" style="margin-top:0;">
+      Find My Bookings
+      <span class="badge" id="bookingsCount">0</span>
+    </div>
+    <div style="margin-bottom:20px;display:flex;gap:10px;align-items:center;">
+      <div class="input-group" style="max-width:340px;">
+        <input type="email" id="lookupEmail" placeholder="Enter your email address"
+          style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:11px;padding:12px 15px;color:var(--text);font-size:14px;outline:none;width:100%;transition:border-color .2s;"
+          onfocus="this.style.borderColor='var(--accent1)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <button class="search-btn" style="width:auto;padding:12px 22px;font-size:14px;" onclick="loadBookingsByEmail()">
+        🔍 Find Bookings
+      </button>
+    </div>
+    <div id="bookingsList"></div>
+
+    <!-- ── ACCOUNT MANAGEMENT PANEL ── -->
+    <div id="accountPanel" style="display:none; margin-top:36px;">
+      <div class="section-title" style="margin-top:0;">
+        Account Settings
+        <span class="badge" id="accountEmailBadge"></span>
+      </div>
+
+      <!-- Profile card (shown after lookup) -->
+      <div id="profileCard" style="background:var(--glass);border:1px solid var(--border);border-radius:18px;padding:24px;backdrop-filter:blur(12px);margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 16px var(--glow);">👤</div>
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;" id="profileName">—</div>
+            <div style="font-size:12px;color:var(--muted);" id="profileEmail">—</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <button onclick="showUpdateForm()" id="editProfileBtn"
+              style="background:rgba(0,198,255,0.1);border:1px solid rgba(0,198,255,0.3);color:var(--accent1);padding:8px 16px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;"
+              onmouseover="this.style.background='rgba(0,198,255,0.2)'" onmouseout="this.style.background='rgba(0,198,255,0.1)'">
+              ✏️ Edit Profile
+            </button>
+            <button onclick="confirmDeleteUser()"
+              style="background:rgba(255,23,68,0.1);border:1px solid rgba(255,23,68,0.3);color:var(--red);padding:8px 16px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;cursor:pointer;transition:all .2s;"
+              onmouseover="this.style.background='rgba(255,23,68,0.2)'" onmouseout="this.style.background='rgba(255,23,68,0.1)'">
+              🗑️ Delete Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Read-only info row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;" id="profileInfoRow">
+          <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Name</div>
+            <div style="font-weight:600;font-size:14px;" id="profileNameDisplay">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Phone</div>
+            <div style="font-weight:600;font-size:14px;" id="profilePhoneDisplay">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">User ID</div>
+            <div style="font-weight:600;font-size:14px;color:var(--muted);" id="profileIdDisplay">—</div>
+          </div>
+        </div>
+
+        <!-- Inline edit form (hidden by default) -->
+        <div id="updateForm" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:18px;">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px;color:var(--muted);">UPDATE PROFILE</div>
+          <div class="form-grid" style="margin-bottom:14px;">
+            <div class="form-field">
+              <label>Full Name</label>
+              <input type="text" id="updateName" placeholder="New name">
+            </div>
+            <div class="form-field">
+              <label>Phone Number</label>
+              <input type="tel" id="updatePhone" placeholder="New phone number">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">
+            ⚠️ Email cannot be changed — it's your account identifier. Leave a field blank to keep the current value.
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="submitUpdate()"
+              style="flex:1;padding:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));border:none;border-radius:11px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px var(--glow);"
+              id="updateSubmitBtn">
+              💾 Save Changes
+            </button>
+            <button onclick="hideUpdateForm()"
+              style="padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete confirmation card (hidden by default) -->
+      <div id="deleteConfirmCard" style="display:none;background:rgba(255,23,68,0.06);border:1px solid rgba(255,23,68,0.25);border-radius:16px;padding:22px;">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:8px;color:var(--red);">⚠️ Delete Account?</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+          This will permanently delete your account and all cancelled booking history. <strong style="color:var(--text);">You cannot delete an account with active confirmed bookings</strong> — please cancel them first.
+        </p>
+        <div style="display:flex;gap:10px;">
+          <button onclick="submitDelete()"
+            style="flex:1;padding:12px;background:linear-gradient(135deg,#ff1744,#c62828);border:none;border-radius:11px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;"
+            id="deleteSubmitBtn">
+            🗑️ Yes, Delete My Account
+          </button>
+          <button onclick="hideDeleteConfirm()"
+            style="padding:12px 20px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:11px;color:var(--muted);font-family:'Syne',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end bookingsView -->
+</div>
+
+<!-- ══ BOOKING MODAL ══ -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Book Your Seat</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="steps" id="stepsBar">
+      <div class="step active" id="step1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Seat</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Passenger</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-circle">3</div>
+        <div class="step-label">Payment</div>
+      </div>
+    </div>
+
+    <div id="mainBookingContent">
+      <!-- STEP 1: SEAT MAP -->
+      <div id="tab-seats">
+        <div style="margin-bottom:14px;">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:3px;" id="seatTrainName"></div>
+          <div style="font-size:12px;color:var(--muted);">Tap a green seat to select it — your seat is reserved once you confirm</div>
+        </div>
+        <div class="seat-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:rgba(0,230,118,.25);border:1px solid #00e676;"></div>Available
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:rgba(255,23,68,.2);border:1px solid #ff1744;"></div>Taken
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:linear-gradient(135deg,var(--accent1),var(--accent2));"></div>Selected
+          </div>
+        </div>
+        <div class="seat-map-wrapper">
+          <div id="seatMapContainer"></div>
+        </div>
+        <div class="selected-info" id="selectedSeatInfo">No seat selected — tap a green seat above</div>
+        <button class="action-btn" onclick="goToPassenger()">Continue to Passenger Details →</button>
+      </div>
+
+      <!-- STEP 2: PASSENGER DETAILS (dynamic, one card per passenger) -->
+      <div id="tab-details" style="display:none;">
+        <div id="passengerFormsContainer"></div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-field">
+            <label>Total Fare</label>
+            <div class="seat-display" id="fareDisplay" style="color:var(--green);">₹0</div>
+          </div>
+        </div>
+        <button class="action-btn" onclick="goToPayment()">Continue to Payment →</button>
+      </div>
+
+      <!-- STEP 3: PAYMENT -->
+      <div id="tab-payment" style="display:none;">
+        <div class="payment-summary">
+          <div class="pay-row"><span>Base Fare</span><span id="baseFare">₹0</span></div>
+          <div class="pay-row"><span>Reservation Charges</span><span>₹30</span></div>
+          <div class="pay-row"><span>Service Fee</span><span>₹17.70</span></div>
+          <div class="pay-row"><span>GST (5%)</span><span id="gstAmount">₹0</span></div>
+          <div class="pay-row total"><span>Total</span><span id="totalAmount">₹0</span></div>
+        </div>
+
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:10px;color:var(--muted);">PAYMENT METHOD</div>
+        <div class="pay-methods">
+          <div class="pay-method selected" data-method="card" onclick="selectPayment(this)">
+            <span class="pay-icon">💳</span>Card
+          </div>
+          <div class="pay-method" data-method="upi" onclick="selectPayment(this)">
+            <span class="pay-icon">📱</span>UPI
+          </div>
+          <div class="pay-method" data-method="netbanking" onclick="selectPayment(this)">
+            <span class="pay-icon">🏦</span>Net Banking
+          </div>
+          <div class="pay-method" data-method="wallet" onclick="selectPayment(this)">
+            <span class="pay-icon">💰</span>Wallet
+          </div>
+        </div>
+
+        <div id="cardFields" class="card-form">
+          <div class="form-field full">
+            <label>Card Number</label>
+            <input type="text" id="cardNumber" placeholder="XXXX  XXXX  XXXX  XXXX" maxlength="19" oninput="formatCard(this)">
+          </div>
+          <div class="form-field">
+            <label>Expiry (MM/YY)</label>
+            <input type="text" id="cardExpiry" placeholder="MM / YY" maxlength="7">
+          </div>
+          <div class="form-field">
+            <label>CVV</label>
+            <input type="password" id="cardCvv" placeholder="•••" maxlength="3">
+          </div>
+          <div class="form-field full">
+            <label>Name on Card</label>
+            <input type="text" id="cardName" placeholder="Full name">
+          </div>
+        </div>
+
+        <div id="upiField" style="display:none;margin-bottom:18px;">
+          <div class="form-field">
+            <label>UPI ID</label>
+            <input type="text" id="upiId" placeholder="yourname@upi">
+          </div>
+        </div>
+
+        <div id="netbankingField" style="display:none;margin-bottom:18px;">
+          <div class="form-field">
+            <label>Select Bank</label>
+            <select id="bankSelect">
+              <option value="">Choose your bank</option>
+              <option>SBI</option><option>HDFC Bank</option><option>ICICI Bank</option>
+              <option>Axis Bank</option><option>Kotak Mahindra</option><option>Punjab National Bank</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="walletField" style="display:none;margin-bottom:18px;">
+          <div class="form-field">
+            <label>Select Wallet</label>
+            <select id="walletSelect">
+              <option value="">Choose wallet</option>
+              <option>Paytm</option><option>PhonePe</option><option>Google Pay</option>
+              <option>Amazon Pay</option><option>Mobikwik</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="action-btn" id="payBtn" onclick="processPayment()">🔒 Pay Securely Now</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">🎉</div>
+      <h2>Booking Confirmed!</h2>
+      <p style="color:var(--muted);margin-bottom:18px;">Your ticket has been booked successfully. Travel smart, travel seamless.</p>
+      <div class="pnr-box">
+        <div class="pnr-label">PNR / Booking Reference</div>
+        <div class="pnr-num" id="pnrNumber">—</div>
+      </div>
+      <div class="confirm-details">
+        <div class="cd-row"><span style="color:var(--muted);">Vehicle</span><span id="confirmedTrain" style="font-weight:600;"></span></div>
+        <div class="cd-row"><span style="color:var(--muted);">Route</span><span id="confirmedRoute" style="font-weight:600;"></span></div>
+        <div class="cd-row"><span style="color:var(--muted);">Passenger</span><span id="confirmedName" style="font-weight:600;"></span></div>
+        <div class="cd-row"><span style="color:var(--muted);">Seat / Berth</span><span id="confirmedSeat" style="font-weight:600;color:var(--accent1);"></span></div>
+        <div class="cd-row"><span style="color:var(--muted);">Amount Paid</span><span id="confirmedAmount" style="font-weight:700;color:var(--green);"></span></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="action-btn" onclick="closeModal()" style="flex:1">← Back to Search</button>
+        <button class="action-btn green" onclick="viewMyBookings()" style="flex:1">📋 View My Bookings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+document.getElementById('apiUrlDisplay').textContent = API;
+
+const THEMES = {
+  train: { accent1:'#00c6ff', accent2:'#0072ff', glow:'rgba(0,114,255,0.35)', tabGlow:'rgba(0,198,255,0.2)', orbA:'#0072ff', orbB:'#00c6ff', orbC:'#0040cc' },
+  flight:{ accent1:'#b06dff', accent2:'#7c3aed', glow:'rgba(124,58,237,0.4)', tabGlow:'rgba(176,109,255,0.2)', orbA:'#7c3aed', orbB:'#a855f7', orbC:'#4c1d95' },
+  ship:  { accent1:'#ff8c42', accent2:'#e63900', glow:'rgba(230,57,0,0.4)',   tabGlow:'rgba(255,140,66,0.2)', orbA:'#e63900', orbB:'#ff6b2b', orbC:'#7f1d1d' }
+};
+
+let currentMode = 'train';
+let selectedSeats = [];   // array of {seat_id, seat_number}
+let selectedSeat = null;  // kept for legacy single-seat compat (points to first seat)
+let selectedTrip = null;
+let selectedPayMethod = 'card';
+let backendOnline = false;
+let currentEmail = '';
+let passengerCount = 1;   // set from the pax dropdown when booking opens
+
+async function checkBackend() {
+  try {
+    const res = await fetch(`${API}/`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      backendOnline = true;
+      document.getElementById('statusDot').className = 'status-dot online';
+      document.getElementById('statusText').textContent = 'Backend Online';
+      document.getElementById('demoNotice').classList.remove('show');
+      return;
+    }
+  } catch(e) {}
+  backendOnline = false;
+  document.getElementById('statusDot').className = 'status-dot offline';
+  document.getElementById('statusText').textContent = 'Demo Mode';
+  document.getElementById('demoNotice').classList.add('show');
+}
+
+function showView(view) {
+  document.getElementById('searchView').style.display    = view === 'search'   ? 'block' : 'none';
+  document.getElementById('bookingsView').style.display  = view === 'bookings' ? 'block' : 'none';
+  document.getElementById('searchTabBtn').style.display  = view === 'bookings' ? 'inline-flex' : 'none';
+  document.getElementById('myBookingsBtn').classList.toggle('active', view === 'bookings');
+}
+
+function applyTheme(mode) {
+  const t = THEMES[mode];
+  const r = document.documentElement.style;
+  Object.entries({ '--accent1':t.accent1, '--accent2':t.accent2, '--glow':t.glow,
+    '--tab-glow':t.tabGlow, '--orb-a':t.orbA, '--orb-b':t.orbB, '--orb-c':t.orbC
+  }).forEach(([k,v]) => r.setProperty(k, v));
+}
+
+function switchMode(mode, el) {
+  currentMode = mode;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['train','flight','ship'].forEach(m =>
+    document.getElementById('form-'+m).style.display = m === mode ? 'block' : 'none'
+  );
+  document.getElementById('modeLabel').textContent = {train:'Trains',flight:'Flights',ship:'Ships'}[mode];
+  document.getElementById('resultsSection').style.display = 'none';
+  applyTheme(mode);
+  const card = document.getElementById('searchCard');
+  card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'slideUp .45s ease both';
+}
+
+function swapFields(a, b) {
+  const fa = document.getElementById(a), fb = document.getElementById(b);
+  [fa.value, fb.value] = [fb.value, fa.value];
+}
+
+const SAMPLE = {
+  train:[
+    { trip_id:1, vehicle_name:'Rajdhani Express', number_code:'TR1001', vehicle_type:'train', from_location:'Mumbai', to_location:'Delhi', departure_time:'2026-04-01T08:00:00', arrival_time:'2026-04-01T20:00:00', price:1500, available_seats:3, seats:[
+      {seat_id:1,seat_number:1,status:'available'},{seat_id:2,seat_number:2,status:'booked'},
+      {seat_id:3,seat_number:3,status:'available'},{seat_id:4,seat_number:4,status:'booked'},
+      {seat_id:5,seat_number:5,status:'available'}
+    ]},
+    { trip_id:2, vehicle_name:'Shatabdi Express', number_code:'TR1002', vehicle_type:'train', from_location:'Delhi', to_location:'Kolkata', departure_time:'2026-04-02T06:00:00', arrival_time:'2026-04-02T18:00:00', price:1400, available_seats:3, seats:[
+      {seat_id:6,seat_number:1,status:'available'},{seat_id:7,seat_number:2,status:'available'},
+      {seat_id:8,seat_number:3,status:'booked'},{seat_id:9,seat_number:4,status:'available'},
+      {seat_id:10,seat_number:5,status:'booked'}
+    ]},
+    { trip_id:3, vehicle_name:'Deccan Express', number_code:'TR1003', vehicle_type:'train', from_location:'Mumbai', to_location:'Pune', departure_time:'2026-04-03T07:30:00', arrival_time:'2026-04-03T10:30:00', price:320, available_seats:8, seats:[
+      {seat_id:11,seat_number:1,status:'available'},{seat_id:12,seat_number:2,status:'available'},
+      {seat_id:13,seat_number:3,status:'available'},{seat_id:14,seat_number:4,status:'booked'},
+      {seat_id:15,seat_number:5,status:'available'},{seat_id:16,seat_number:6,status:'booked'}
+    ]},
+  ],
+  flight:[
+    { trip_id:6, vehicle_name:'Air India AI202', number_code:'FL2001', vehicle_type:'flight', from_location:'Ahmedabad', to_location:'Jaipur', departure_time:'2026-04-01T10:00:00', arrival_time:'2026-04-01T12:00:00', price:4500, available_seats:3, seats:[
+      {seat_id:26,seat_number:1,status:'booked'},{seat_id:27,seat_number:2,status:'available'},
+      {seat_id:28,seat_number:3,status:'available'},{seat_id:29,seat_number:4,status:'booked'},
+      {seat_id:30,seat_number:5,status:'available'}
+    ]},
+    { trip_id:7, vehicle_name:'IndiGo 6E 303', number_code:'FL2002', vehicle_type:'flight', from_location:'Mumbai', to_location:'Bangalore', departure_time:'2026-04-02T14:00:00', arrival_time:'2026-04-02T15:45:00', price:3800, available_seats:12, seats:[
+      {seat_id:31,seat_number:1,status:'available'},{seat_id:32,seat_number:2,status:'available'},
+      {seat_id:33,seat_number:3,status:'booked'},{seat_id:34,seat_number:4,status:'available'},
+      {seat_id:35,seat_number:5,status:'booked'}
+    ]},
+  ],
+  ship:[
+    { trip_id:11, vehicle_name:'Ocean Queen', number_code:'SH3001', vehicle_type:'ship', from_location:'Chennai', to_location:'Kolkata', departure_time:'2026-04-06T08:00:00', arrival_time:'2026-04-06T20:00:00', price:2000, available_seats:3, seats:[
+      {seat_id:51,seat_number:1,status:'available'},{seat_id:52,seat_number:2,status:'booked'},
+      {seat_id:53,seat_number:3,status:'available'},{seat_id:54,seat_number:4,status:'available'},
+      {seat_id:55,seat_number:5,status:'booked'}
+    ]},
+    { trip_id:12, vehicle_name:'Sea Empress', number_code:'SH3002', vehicle_type:'ship', from_location:'Kochi', to_location:'Port Blair', departure_time:'2026-04-08T06:00:00', arrival_time:'2026-04-09T08:00:00', price:3500, available_seats:6, seats:[
+      {seat_id:56,seat_number:1,status:'available'},{seat_id:57,seat_number:2,status:'available'},
+      {seat_id:58,seat_number:3,status:'booked'},{seat_id:59,seat_number:4,status:'available'},
+      {seat_id:60,seat_number:5,status:'available'}
+    ]},
+  ]
+};
+
+async function doSearch() {
+  let from, to, dateVal;
+  if (currentMode === 'train') {
+    from = document.getElementById('train-from').value.trim();
+    to   = document.getElementById('train-to').value.trim();
+    dateVal = document.getElementById('train-date').value;
+  } else if (currentMode === 'flight') {
+    from = document.getElementById('flight-from').value.trim().toUpperCase();
+    to   = document.getElementById('flight-to').value.trim().toUpperCase();
+    dateVal = document.getElementById('flight-date').value;
+  } else {
+    from = document.getElementById('ship-from').value.trim();
+    to   = document.getElementById('ship-to').value.trim();
+    dateVal = document.getElementById('ship-date').value;
+  }
+
+  if (!from || !to) { showToast('Please fill in both From and To fields.'); return; }
+  if (from.toLowerCase() === to.toLowerCase()) { showToast('From and To cannot be the same.'); return; }
+  if (!dateVal) { showToast('Please select a departure date.'); return; }
+
+  const btns = document.querySelectorAll('.search-btn');
+  btns.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner"></span> Searching…'; });
+
+  let trips = null;
+
+  if (backendOnline) {
+    try {
+      const res = await fetch(`${API}/search-trips?source=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&travel_date=${dateVal}&vehicle_type=${currentMode}`);
+      if (res.ok) {
+        const data = await res.json();
+        trips = data.trips || [];
+      }
+    } catch(e) { backendOnline = false; }
+  }
+
+  if (trips === null) {
+    trips = SAMPLE[currentMode];
+    document.getElementById('demoNotice').classList.add('show');
+  } else if (trips.length === 0) {
+    displayResults([], from, to);
+    btns.forEach(b => { b.disabled = false; });
+    restoreBtnText();
+    return;
+  }
+
+  btns.forEach(b => { b.disabled = false; });
+  restoreBtnText();
+  displayResults(trips, from, to);
+}
+
+function restoreBtnText() {
+  const labels = { train:'🔍 Search Trains', flight:'🔍 Search Flights', ship:'🔍 Search Ships' };
+  document.querySelectorAll('.search-btn').forEach(b => { b.textContent = labels[currentMode]; });
+}
+
+function displayResults(list, from, to) {
+  const grid = document.getElementById('resultsGrid');
+  const icons = { train:'🚄', flight:'✈️', ship:'🚢' };
+
+  document.getElementById('resultCount').textContent = list.length + ' found';
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:6px;">No trips found</div>
+      <div style="font-size:13px;">No ${currentMode}s found from <strong>${from}</strong> to <strong>${to}</strong> on the selected date.</div>
+      <div style="font-size:12px;margin-top:8px;color:rgba(120,136,170,0.7);">Try different dates or check available routes in the database.</div>
+    </div>`;
+    document.getElementById('resultsSection').style.display = 'block';
+    return;
+  }
+
+  grid.innerHTML = list.map((v, i) => {
+    const dep = new Date(v.departure_time);
+    const arr = new Date(v.arrival_time);
+    const depStr = dep.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const arrStr = arr.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const durMs  = arr - dep;
+    const durH   = Math.floor(Math.abs(durMs)/3600000);
+    const durM   = Math.floor((Math.abs(durMs)%3600000)/60000);
+    const durStr = `${durH}h ${durM}m`;
+    const seatsLeft = v.available_seats;
+    const seatsColor = seatsLeft <= 3 ? 'var(--red)' : seatsLeft <= 8 ? 'var(--gold)' : 'var(--green)';
+
+    return `
+    <div class="result-card" onclick="openBooking(${i})">
+      <div>
+        <div class="res-name">${icons[currentMode]} ${v.vehicle_name}</div>
+        <div class="res-num">#${v.number_code}</div>
+        <div style="font-size:11px;color:${seatsColor};margin-top:4px;font-weight:600;">${seatsLeft} seats left</div>
+      </div>
+      <div class="route-times">
+        <div class="time-block">
+          <div class="time">${depStr}</div>
+          <div class="station-code">${v.from_location}</div>
+        </div>
+        <div class="duration-line">
+          <div class="line"></div>
+          <div class="dur-text">${durStr}</div>
+        </div>
+        <div class="time-block">
+          <div class="time">${arrStr}</div>
+          <div class="station-code">${v.to_location}</div>
+        </div>
+      </div>
+      <div class="price-block">
+        <div class="price">₹${Number(v.price).toLocaleString()}</div>
+        <div class="price-note">per person</div>
+      </div>
+      <button class="book-mini-btn" onclick="event.stopPropagation();openBooking(${i})">Book Now</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('resultsSection').scrollIntoView({ behavior:'smooth', block:'start' });
+  window._lastResults = list;
+}
+
+async function openBooking(idx) {
+  selectedTrip = window._lastResults[idx];
+  selectedSeats = [];
+  selectedSeat = null;
+
+  // Read passenger count from the active mode's pax selector
+  const paxEl = document.getElementById(currentMode + '-pax');
+  passengerCount = paxEl ? parseInt(paxEl.value) : 1;
+
+  document.getElementById('seatTrainName').textContent =
+    selectedTrip.vehicle_name + '  ' + selectedTrip.from_location + ' → ' + selectedTrip.to_location;
+  document.getElementById('modalTitle').textContent = 'Book — ' + selectedTrip.vehicle_name;
+  document.getElementById('selectedSeatInfo').textContent =
+    passengerCount > 1
+      ? `Select ${passengerCount} seats (0 of ${passengerCount} selected)`
+      : 'No seat selected — tap a green seat above';
+
+  document.getElementById('mainBookingContent').style.display = 'block';
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('bookingModal').classList.add('open');
+  goToStep(1);
+
+  await buildSeatMap();
+}
+
+async function buildSeatMap() {
+  const container = document.getElementById('seatMapContainer');
+  container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px;display:flex;align-items:center;gap:8px;"><span class="spinner"></span> Loading seats…</div>';
+
+  let seatData = [];
+
+  if (backendOnline && selectedTrip.trip_id && !isNaN(Number(selectedTrip.trip_id))) {
+    try {
+      const res = await fetch(`${API}/trip/${selectedTrip.trip_id}/seats`);
+      if (res.ok) {
+        const data = await res.json();
+        seatData = data.seats || [];
+      }
+    } catch(e) {}
+  }
+
+  if (seatData.length === 0) {
+    if (selectedTrip.seats && selectedTrip.seats.length > 0) {
+      seatData = selectedTrip.seats;
+    } else {
+      seatData = Array.from({length:18}, (_, i) => ({
+        seat_id: -(i+1), seat_number: i+1, status: 'available'
+      }));
+    }
+  }
+
+  renderSeatGrid(container, seatData);
+}
+
+function renderSeatGrid(container, seatData) {
+  const SEATS_PER_ROW = 6;
+  const totalRows = Math.ceil(seatData.length / SEATS_PER_ROW);
+  const icons = { train:'🚂', flight:'✈️', ship:'🚢' };
+
+  let html = `<div class="seat-cabin">
+    <div class="cabin-label">${icons[currentMode] || '🪑'} Click a seat to select</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding-left:28px;">
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">A</div>
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">B</div>
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">C</div>
+      <div class="aisle-gap"></div>
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">D</div>
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">E</div>
+      <div style="width:40px;text-align:center;font-size:10px;color:var(--muted);">F</div>
+    </div>`;
+
+  for (let row = 0; row < totalRows; row++) {
+    const rowSeats  = seatData.slice(row * SEATS_PER_ROW, (row+1) * SEATS_PER_ROW);
+    const leftSeats  = rowSeats.slice(0, 3);
+    const rightSeats = rowSeats.slice(3, 6);
+
+    html += `<div class="seat-row"><div class="row-num">${row+1}</div><div class="seat-group">`;
+    leftSeats.forEach(s => {
+      const cls = s.status === 'booked' ? 'taken' : 'available';
+      html += `<button class="seat ${cls}" data-seat-id="${s.seat_id}" data-seat-num="${s.seat_number}"
+        ${s.status === 'booked' ? 'disabled' : ''}
+        onclick="selectSeat(${s.seat_id}, ${s.seat_number}, this)">${s.seat_number}</button>`;
+    });
+    html += `</div><div class="aisle-gap"></div><div class="seat-group">`;
+    rightSeats.forEach(s => {
+      const cls = s.status === 'booked' ? 'taken' : 'available';
+      html += `<button class="seat ${cls}" data-seat-id="${s.seat_id}" data-seat-num="${s.seat_number}"
+        ${s.status === 'booked' ? 'disabled' : ''}
+        onclick="selectSeat(${s.seat_id}, ${s.seat_number}, this)">${s.seat_number}</button>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectSeat(seatId, seatNum, btn) {
+  const alreadyIdx = selectedSeats.findIndex(s => s.seat_id === seatId);
+
+  if (alreadyIdx !== -1) {
+    // Deselect
+    selectedSeats.splice(alreadyIdx, 1);
+    btn.classList.remove('selected'); btn.classList.add('available');
+  } else {
+    if (selectedSeats.length >= passengerCount) {
+      showToast(`You can only select ${passengerCount} seat(s) for ${passengerCount} passenger(s).`, 'error');
+      return;
+    }
+    selectedSeats.push({ seat_id: seatId, seat_number: seatNum });
+    btn.classList.remove('available'); btn.classList.add('selected');
+  }
+
+  selectedSeat = selectedSeats[0] || null;
+
+  const count = selectedSeats.length;
+  if (count === 0) {
+    document.getElementById('selectedSeatInfo').textContent =
+      passengerCount > 1
+        ? `Select ${passengerCount} seats (0 of ${passengerCount} selected)`
+        : 'No seat selected — tap a green seat above';
+  } else if (count < passengerCount) {
+    const nums = selectedSeats.map(s => s.seat_number).join(', ');
+    document.getElementById('selectedSeatInfo').innerHTML =
+      `🪑 Seats <strong style="color:var(--accent1)">${nums}</strong> — select ${passengerCount - count} more`;
+  } else {
+    const nums = selectedSeats.map(s => s.seat_number).join(', ');
+    document.getElementById('selectedSeatInfo').innerHTML =
+      `✅ Seats <strong style="color:var(--accent1)">${nums}</strong> selected — continue to passenger details`;
+  }
+}
+
+function goToStep(n) {
+  ['seats','details','payment'].forEach((t,i) => {
+    document.getElementById('tab-'+t).style.display = (i+1 === n) ? 'block' : 'none';
+  });
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if (i < n)       el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+function goToPassenger() {
+  if (selectedSeats.length < passengerCount) {
+    showToast(`Please select ${passengerCount} seat(s). You have ${selectedSeats.length} so far.`);
+    return;
+  }
+
+  const base = Number(selectedTrip.price);
+  const total = base * passengerCount;
+  document.getElementById('fareDisplay').textContent = '₹' + total.toLocaleString() +
+    (passengerCount > 1 ? ` (${passengerCount} × ₹${base.toLocaleString()})` : '');
+
+  // Build one form card per passenger
+  const container = document.getElementById('passengerFormsContainer');
+  container.innerHTML = selectedSeats.map((seat, i) => `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:18px 18px 10px;margin-bottom:14px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px;color:var(--accent1);">
+        Passenger ${i + 1} — Seat #${seat.seat_number}
+      </div>
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Full Name *</label>
+          <input type="text" id="pName_${i}" placeholder="As on ID proof">
+        </div>
+        <div class="form-field">
+          <label>Age *</label>
+          <input type="number" id="pAge_${i}" placeholder="Age" min="1" max="120">
+        </div>
+        <div class="form-field">
+          <label>Gender *</label>
+          <select id="pGender_${i}">
+            <option value="">Select</option>
+            <option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Phone Number *</label>
+          <input type="tel" id="pPhone_${i}" placeholder="+91 XXXXXXXXXX">
+        </div>
+        <div class="form-field" style="grid-column:1/-1;">
+          <label>Email Address *${i > 0 ? ' <span style="color:var(--muted);font-weight:400;">(optional if same as Passenger 1)</span>' : ''}</label>
+          <input type="email" id="pEmail_${i}" placeholder="${i === 0 ? 'you@example.com' : 'Leave blank to use Passenger 1 email'}">
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  goToStep(2);
+}
+
+function goToPayment() {
+  // Validate all passenger forms
+  const passengers = [];
+  const primaryEmail = document.getElementById('pEmail_0') ? document.getElementById('pEmail_0').value.trim() : '';
+
+  for (let i = 0; i < passengerCount; i++) {
+    const name   = document.getElementById(`pName_${i}`)?.value.trim();
+    const phone  = document.getElementById(`pPhone_${i}`)?.value.trim();
+    const age    = document.getElementById(`pAge_${i}`)?.value;
+    const gender = document.getElementById(`pGender_${i}`)?.value;
+    let   email  = document.getElementById(`pEmail_${i}`)?.value.trim();
+
+    if (i > 0 && !email) email = primaryEmail; // inherit primary email for extra passengers
+
+    if (!name || !phone || !age || !gender) {
+      showToast(`Please fill all required fields for Passenger ${i + 1}.`); return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast(`Please enter a valid email for Passenger ${i > 0 ? i + 1 + ' (or leave blank to use Passenger 1 email)' : 1}.`); return;
+    }
+    passengers.push({ name, phone, email, age, gender, seat: selectedSeats[i] });
+  }
+
+  currentEmail = passengers[0].email;
+  window._passengerData = passengers;
+
+  const base  = Number(selectedTrip.price);
+  const perPassenger = base + 30 + 17.70 + Math.round(base * 0.05);
+  const total = perPassenger * passengerCount;
+  const gst   = Math.round(base * 0.05) * passengerCount;
+
+  document.getElementById('baseFare').textContent   = passengerCount > 1
+    ? `₹${base.toLocaleString()} × ${passengerCount}`
+    : '₹' + base.toLocaleString();
+  document.getElementById('gstAmount').textContent   = '₹' + gst;
+  document.getElementById('totalAmount').textContent = '₹' + total.toLocaleString(undefined, {minimumFractionDigits:2});
+
+  goToStep(3);
+}
+
+function selectPayment(el) {
+  document.querySelectorAll('.pay-method').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPayMethod = el.dataset.method;
+
+  document.getElementById('cardFields').style.display      = selectedPayMethod === 'card'       ? 'grid'  : 'none';
+  document.getElementById('upiField').style.display        = selectedPayMethod === 'upi'        ? 'block' : 'none';
+  document.getElementById('netbankingField').style.display = selectedPayMethod === 'netbanking' ? 'block' : 'none';
+  document.getElementById('walletField').style.display     = selectedPayMethod === 'wallet'     ? 'block' : 'none';
+}
+
+function formatCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1  ').trim();
+}
+
+async function processPayment() {
+  const base  = Number(selectedTrip.price);
+  const perPassenger = base + 30 + 17.70 + Math.round(base * 0.05);
+  const total = perPassenger * passengerCount;
+
+  const pnrPrefix = { train:'PNR', flight:'FLT', ship:'SHP' }[currentMode];
+  const txnId = 'TXN' + Date.now();
+
+  if (selectedPayMethod === 'card') {
+    const cn = document.getElementById('cardNumber').value.replace(/\s/g,'');
+    if (cn.length < 16) { showToast('Please enter a valid 16-digit card number.'); return; }
+    if (!document.getElementById('cardExpiry').value) { showToast('Please enter card expiry.'); return; }
+    if (!document.getElementById('cardCvv').value) { showToast('Please enter CVV.'); return; }
+  }
+  if (selectedPayMethod === 'upi' && !document.getElementById('upiId').value.trim()) {
+    showToast('Please enter UPI ID.'); return;
+  }
+  if (selectedPayMethod === 'netbanking' && !document.getElementById('bankSelect').value) {
+    showToast('Please select a bank.'); return;
+  }
+  if (selectedPayMethod === 'wallet' && !document.getElementById('walletSelect').value) {
+    showToast('Please select a wallet.'); return;
+  }
+
+  const passengers = window._passengerData || [];
+  const hasFakeSeat = selectedSeats.some(s => s.seat_id < 0);
+
+  const btn = document.getElementById('payBtn');
+  btn.innerHTML = '<span class="spinner"></span> Processing…';
+  btn.disabled = true;
+
+  const allPnrs = [];
+  let allBooked = true;
+  let errorMsg = '';
+
+  if (backendOnline && !hasFakeSeat) {
+    // Book each passenger separately (one booking per seat)
+    for (let i = 0; i < passengers.length; i++) {
+      const p = passengers[i];
+      const pnr = pnrPrefix + Math.random().toString(36).substr(2,8).toUpperCase();
+      allPnrs.push(pnr);
+
+      const payload = {
+        name:    p.name,
+        email:   p.email,
+        phone:   p.phone,
+        trip_id: Number(selectedTrip.trip_id),
+        seat_id: Number(p.seat.seat_id),
+        booking_reference: pnr,
+        amount:  parseFloat(perPassenger.toFixed(2)),
+        payment_method: selectedPayMethod,
+        transaction_id: txnId + '_' + i
+      };
+
+      try {
+        const res = await fetch(`${API}/book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.booking_id) {
+          allBooked = false;
+          errorMsg = data.detail || `Booking failed for Passenger ${i + 1}.`;
+          break;
+        }
+      } catch(e) {
+        allBooked = false;
+        errorMsg = 'Network error. Please check your connection.';
+        break;
+      }
+    }
+  } else if (hasFakeSeat) {
+    allBooked = true;
+    passengers.forEach(() => allPnrs.push(pnrPrefix + Math.random().toString(36).substr(2,8).toUpperCase()));
+    showToast('⚠️ Demo mode: bookings not saved to DB', 'warn');
+  } else {
+    allBooked = true;
+    passengers.forEach(() => allPnrs.push(pnrPrefix + Math.random().toString(36).substr(2,8).toUpperCase()));
+  }
+
+  btn.innerHTML = '🔒 Pay Securely Now';
+  btn.disabled = false;
+
+  if (errorMsg) { showToast(errorMsg); return; }
+  if (allBooked) { showSuccess(allPnrs, total, passengers); }
+}
+
+function showSuccess(pnrs, total, passengers) {
+  const pnrList = Array.isArray(pnrs) ? pnrs : [pnrs];
+  const pax = passengers || [{ name: document.getElementById('passengerName')?.value || '—', seat: selectedSeats[0] || selectedSeat }];
+
+  document.getElementById('pnrNumber').textContent    = pnrList.join(' · ');
+  document.getElementById('confirmedTrain').textContent = selectedTrip.vehicle_name + ' (#' + selectedTrip.number_code + ')';
+  document.getElementById('confirmedRoute').textContent = selectedTrip.from_location + ' → ' + selectedTrip.to_location;
+  document.getElementById('confirmedName').textContent  = pax.map((p, i) =>
+    `${p.name} (Seat ${selectedSeats[i]?.seat_number ?? p.seat?.seat_number ?? '—'})`
+  ).join(', ');
+  document.getElementById('confirmedSeat').textContent  = selectedSeats.map(s => 'Seat ' + s.seat_number).join(', ');
+  document.getElementById('confirmedAmount').textContent = '₹' + total.toLocaleString(undefined,{minimumFractionDigits:2});
+
+  document.getElementById('mainBookingContent').style.display = 'none';
+  document.getElementById('successScreen').classList.add('show');
+}
+
+function viewMyBookings() {
+  closeModal();
+  showView('bookings');
+  if (currentEmail) {
+    document.getElementById('lookupEmail').value = currentEmail;
+    loadBookingsByEmail();
+  }
+}
+
+async function loadBookingsByEmail() {
+  const email = document.getElementById('lookupEmail').value.trim();
+  if (!email) { showToast('Please enter your email.'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Please enter a valid email.'); return;
+  }
+
+  const list = document.getElementById('bookingsList');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px;display:flex;align-items:center;gap:8px;"><span class="spinner"></span> Loading bookings…</div>';
+  document.getElementById('bookingsCount').textContent = '…';
+
+  if (!backendOnline) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:36px;margin-bottom:12px;">📴</div>
+      <div style="font-size:14px;">Backend is offline. Bookings are only available when the server is running.</div>
+    </div>`;
+    document.getElementById('bookingsCount').textContent = '0';
+    document.getElementById('accountPanel').style.display = 'none';
+    return;
+  }
+
+  try {
+    const userRes = await fetch(`${API}/user/by-email?email=${encodeURIComponent(email)}`);
+    if (!userRes.ok) {
+      if (userRes.status === 404) {
+        list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+          <div style="font-size:36px;margin-bottom:12px;">🤷</div>
+          <div style="font-size:14px;">No account found with this email.</div>
+          <div style="font-size:12px;margin-top:8px;">Book a ticket first to create your profile.</div>
+        </div>`;
+        document.getElementById('bookingsCount').textContent = '0';
+        document.getElementById('accountPanel').style.display = 'none';
+        return;
+      }
+      throw new Error('Failed to look up user');
+    }
+    const userData = await userRes.json();
+    const userId = userData.user_id;
+    window._currentUser = userData;  // store for update/delete
+
+    // Populate account panel
+    document.getElementById('accountPanel').style.display = 'block';
+    document.getElementById('accountEmailBadge').textContent = userData.email;
+    document.getElementById('profileName').textContent  = userData.name;
+    document.getElementById('profileEmail').textContent = userData.email;
+    document.getElementById('profileNameDisplay').textContent  = userData.name;
+    document.getElementById('profilePhoneDisplay').textContent = userData.phone;
+    document.getElementById('profileIdDisplay').textContent    = '#' + userData.user_id;
+    hideUpdateForm(); hideDeleteConfirm();
+
+    const bookRes = await fetch(`${API}/user/${userId}/bookings`);
+    if (!bookRes.ok) throw new Error('Failed to load bookings');
+    const bookData = await bookRes.json();
+    const bookings = bookData.bookings || [];
+
+    document.getElementById('bookingsCount').textContent = bookings.length;
+
+    if (bookings.length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+        <div style="font-size:36px;margin-bottom:12px;">🎫</div>
+        <div style="font-size:14px;">No bookings found for this email.</div>
+      </div>`;
+      return;
+    }
+
+    const icons = { train:'🚄', flight:'✈️', ship:'🚢' };
+    list.innerHTML = bookings.map(b => {
+      const dep = new Date(b.departure_time);
+      const depStr = dep.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) + ', ' +
+                     dep.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false});
+      const bookedOn = b.booking_time ? new Date(b.booking_time).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+      const icon = icons[b.vehicle_type] || '🚗';
+
+      return `<div class="booking-card ${b.booking_status}">
+        <div class="booking-card-header">
+          <div class="booking-ref">${icon} ${b.booking_reference}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="booking-status ${b.booking_status}">${b.booking_status}</span>
+            ${b.booking_status === 'confirmed' ? `<button class="cancel-btn" onclick="cancelBooking(${b.booking_id}, this)">Cancel</button>` : ''}
+          </div>
+        </div>
+        <div class="booking-details">
+          <div class="booking-detail-item"><div class="bd-label">Vehicle</div><div class="bd-value">${b.vehicle_name}</div></div>
+          <div class="booking-detail-item"><div class="bd-label">Route</div><div class="bd-value">${b.from_location} → ${b.to_location}</div></div>
+          <div class="booking-detail-item"><div class="bd-label">Departure</div><div class="bd-value">${depStr}</div></div>
+          <div class="booking-detail-item"><div class="bd-label">Seat</div><div class="bd-value" style="color:var(--accent1);">#${b.seat_number}</div></div>
+          <div class="booking-detail-item"><div class="bd-label">Fare</div><div class="bd-value" style="color:var(--green);">₹${Number(b.price).toLocaleString()}</div></div>
+          <div class="booking-detail-item"><div class="bd-label">Booked On</div><div class="bd-value">${bookedOn}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:14px;">Failed to load bookings. Please try again.</div>
+    </div>`;
+    document.getElementById('bookingsCount').textContent = '0';
+  }
+}
+
+async function cancelBooking(bookingId, btn) {
+  if (!confirm('Are you sure you want to cancel this booking? This cannot be undone.')) return;
+  btn.textContent = 'Cancelling…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/booking/${bookingId}/cancel`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('Booking cancelled successfully.', 'success');
+      await loadBookingsByEmail();
+    } else {
+      showToast(data.detail || 'Failed to cancel booking.');
+      btn.textContent = 'Cancel'; btn.disabled = false;
+    }
+  } catch(e) {
+    showToast('Network error. Could not cancel booking.');
+    btn.textContent = 'Cancel'; btn.disabled = false;
+  }
+}
+
+// ── ACCOUNT: UPDATE ───────────────────────────────────
+function showUpdateForm() {
+  const user = window._currentUser;
+  document.getElementById('updateName').value  = user?.name  || '';
+  document.getElementById('updatePhone').value = user?.phone || '';
+  document.getElementById('updateForm').style.display = 'block';
+  document.getElementById('deleteConfirmCard').style.display = 'none';
+  document.getElementById('updateForm').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function hideUpdateForm() {
+  document.getElementById('updateForm').style.display = 'none';
+}
+
+async function submitUpdate() {
+  const user = window._currentUser;
+  if (!user) { showToast('No user loaded.'); return; }
+
+  const newName  = document.getElementById('updateName').value.trim();
+  const newPhone = document.getElementById('updatePhone').value.trim();
+
+  if (!newName && !newPhone) { showToast('Enter at least one field to update.'); return; }
+
+  const payload = {};
+  if (newName)  payload.name  = newName;
+  if (newPhone) payload.phone = newPhone;
+
+  const btn = document.getElementById('updateSubmitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Saving…'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API}/user/${user.user_id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      window._currentUser = { ...user, ...data };
+      // Refresh displayed profile
+      document.getElementById('profileName').textContent         = data.name;
+      document.getElementById('profileNameDisplay').textContent  = data.name;
+      document.getElementById('profilePhoneDisplay').textContent = data.phone;
+      hideUpdateForm();
+      showToast('Profile updated successfully.', 'success');
+    } else {
+      showToast(data.detail || 'Update failed.');
+    }
+  } catch(e) {
+    showToast('Network error. Could not update profile.');
+  }
+  btn.innerHTML = '💾 Save Changes'; btn.disabled = false;
+}
+
+// ── ACCOUNT: DELETE ────────────────────────────────────
+function confirmDeleteUser() {
+  document.getElementById('deleteConfirmCard').style.display = 'block';
+  document.getElementById('updateForm').style.display = 'none';
+  document.getElementById('deleteConfirmCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function hideDeleteConfirm() {
+  document.getElementById('deleteConfirmCard').style.display = 'none';
+}
+
+async function submitDelete() {
+  const user = window._currentUser;
+  if (!user) { showToast('No user loaded.'); return; }
+
+  const btn = document.getElementById('deleteSubmitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Deleting…'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API}/user/${user.user_id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      // Clear everything
+      document.getElementById('accountPanel').style.display = 'none';
+      document.getElementById('bookingsList').innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+        <div style="font-size:36px;margin-bottom:12px;">👋</div>
+        <div style="font-size:14px;">Account deleted. Your data has been removed.</div>
+      </div>`;
+      document.getElementById('lookupEmail').value = '';
+      document.getElementById('bookingsCount').textContent = '0';
+      window._currentUser = null;
+      showToast('Account deleted successfully.', 'success');
+    } else {
+      showToast(data.detail || 'Could not delete account.');
+      btn.innerHTML = '🗑️ Yes, Delete My Account'; btn.disabled = false;
+    }
+  } catch(e) {
+    showToast('Network error. Could not delete account.');
+    btn.innerHTML = '🗑️ Yes, Delete My Account'; btn.disabled = false;
+  }
+}
+
+function closeModal() {
+  document.getElementById('bookingModal').classList.remove('open');
+  selectedSeats = [];
+  selectedSeat = null;
+  window._passengerData = [];
+  ['cardNumber','cardExpiry','cardCvv','cardName','upiId'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const pfc = document.getElementById('passengerFormsContainer');
+  if (pfc) pfc.innerHTML = '';
+}
+
+function showToast(msg, type='error') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type === 'success' ? ' success' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// INIT
+document.getElementById('train-date').valueAsDate  = new Date();
+document.getElementById('flight-date').valueAsDate = new Date();
+document.getElementById('ship-date').valueAsDate   = new Date();
+applyTheme('train');
+
+['flight-from','flight-to'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
+});
+
+document.getElementById('bookingModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+checkBackend();
+setInterval(checkBackend, 30000);
+</script>
+</body>
+</html>
